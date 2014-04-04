@@ -16,14 +16,7 @@ _PATH="$PATH"
 export PATH="/system/xbin:/system/bin:/sbin"
 
 # Constants
-LOGDIR="XZDualRecovery"
-PREPLOG="/data/local/tmp/${LOGDIR}/preperation.log"
-LOGFILE="XZDualRecovery.log"
-
-# Nodes setup
-BOOTREC_LED_RED="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|/system/xbin/busybox grep red)/brightness"
-BOOTREC_LED_GREEN="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|/system/xbin/busybox grep green)/brightness"
-BOOTREC_LED_BLUE="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|/system/xbin/busybox grep blue)/brightness"
+PREPLOG="/data/local/tmp/XZDualRecovery/preperation.log"
 
 # Function definitions
 
@@ -36,28 +29,7 @@ TEXECL(){
   return ${_RET}
 }
 
-SETLED() {
-	if [ "$1" = "on" ]; then
-
-		echo "$2" > ${BOOTREC_LED_RED}
-		echo "$3" > ${BOOTREC_LED_GREEN}
-		echo "$4" > ${BOOTREC_LED_BLUE}
-
-	else
-		echo "0" > ${BOOTREC_LED_RED}
-		echo "0" > ${BOOTREC_LED_GREEN}
-		echo "0" > ${BOOTREC_LED_BLUE}
-	fi
-}
 EXIT2CM(){
-	# Turn on a red led, as a visual warning to the user
-	SETLED on 255 0 0
-
-	sleep 2
-
-	# Turn off LED
-	SETLED off
-
 	umount -l /storage/sdcard1
 
 	export PATH="${_PATH}"
@@ -84,12 +56,10 @@ if [ -x "${BUSYBOX}" ]; then
 	TEXECL mount -o remount,rw rootfs /
 	TEXECL mount -o remount,rw /system
 
-	if [ -f "/system/xbin/disableric" ]; then
-		TEXECL mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
-		TEXECL mkdir -p /sys/kernel/security/sony_ric
-		TEXECL chmod 755 /sys/kernel/security/sony_ric
-		TEXECL echo "0" > /sys/kernel/security/sony_ric/enable
-	fi
+	TEXECL mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
+	TEXECL mkdir -p /sys/kernel/security/sony_ric
+	TEXECL chmod 755 /sys/kernel/security/sony_ric
+	TEXECL echo "0" > /sys/kernel/security/sony_ric/enable
 
 	if [ -x "${BUSYBOX}" -a -x "/system/bin/dualrecovery.sh" ]; then
 
