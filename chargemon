@@ -27,11 +27,7 @@ BOOTREC_LED_GREEN="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|
 BOOTREC_LED_BLUE="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|/system/xbin/busybox grep blue)/brightness"
 
 # Function definitions
-TECHOL(){
-  _TIME=`/system/xbin/busybox date +"%H:%M:%S"`
-  echo "${_TIME} >> $*" >> ${PREPLOG}
-  return 0
-}
+
 TEXECL(){
   _TIME=`/system/xbin/busybox date +"%H:%M:%S"`
   echo "${_TIME} >> $*" >> ${PREPLOG}
@@ -44,13 +40,11 @@ TEXECL(){
 SETLED() {
 	if [ "$1" = "on" ]; then
 
-		TECHOL "Turn on LED R: $2 G: $3 B: $4"
 		echo "$2" > ${BOOTREC_LED_RED}
 		echo "$3" > ${BOOTREC_LED_GREEN}
 		echo "$4" > ${BOOTREC_LED_BLUE}
 
 	else
-		TECHOL "Turn off LED"
 		echo "0" > ${BOOTREC_LED_RED}
 		echo "0" > ${BOOTREC_LED_GREEN}
 		echo "0" > ${BOOTREC_LED_BLUE}
@@ -143,55 +137,29 @@ if [ -x "${BUSYBOX}" ]; then
 
 	if [ -x "${BUSYBOX}" -a -x "/system/bin/dualrecovery.sh" ]; then
 
-		TECHOL "Install busybox to /sbin..."
 		${BUSYBOX} cp ${BUSYBOX} /sbin/
 
 		if [ ! -f "/system/etc/.xzdrbusybox" ]; then
 
-			TECHOL "Creating symlinks in /system/xbin to all functions of busybox."
 			# Create a symlink for each of the supported commands
 			for sym in `${BUSYBOX} --list`; do
-				TECHOL "Linking ${BUSYBOX} to /system/xbin/$sym"
 				${BUSYBOX} ln -sf ${BUSYBOX} /system/xbin/$sym
 			done
 
 			${BUSYBOX} touch /system/etc/.xzdrbusybox
 
-		else
-
-			TECHOL "Skipping creation of busybox symlinks."
-
 		fi
 
 		export PATH="/system/xbin"
 
-		TECHOL "Copying recovery files to /sbin"
 		TEXECL cp /system/bin/dualrecovery.sh /sbin/init.sh
 		TEXECL chmod 755 /sbin/init.sh
-
-	else
-
-		TECHOL "Key files missing, exitting!"
-
-		EXIT2CM
 
 	fi
 
 	TEXECL mount -o remount,ro rootfs /
 	TEXECL mount -o remount,ro /system
 
-fi
-
-# Create mountpoint if it doesn't exist
-if [ ! -d /storage/sdcard1 ]; then
-	TEXECL mount -o remount,rw rootfs /
-	TEXECL mkdir -p /storage/sdcard1
-	TEXECL mount -o remount,ro rootfs /
-fi
-
-# As a precaution, give users a way out. This works best if the user has an external sdcard.
-if [ -f "${DRPATH}/donotrun" ]; then
-	EXIT2CM
 fi
 
 if [ ! -d "/system/etc/init.d" ]; then
