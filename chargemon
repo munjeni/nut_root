@@ -18,7 +18,7 @@ export PATH="/system/xbin:/system/bin:/sbin"
 # Constants
 LOGDIR="XZDualRecovery"
 SECUREDIR="/system/.XZDualRecovery"
-PREPLOG="/tmp/${LOGDIR}/preperation.log"
+PREPLOG="/data/local/tmp/${LOGDIR}/preperation.log"
 LOGFILE="XZDualRecovery.log"
 
 # Nodes setup
@@ -89,17 +89,8 @@ fi
 
 # We can actually safely asume a busybox exists in /system/xbin (as XZDualRecovery installs one there)
 ${BUSYBOX} mount -o remount,rw rootfs /
-MADETMP="false"
-if [ ! -d "/tmp" ]; then
 
-	mkdir /tmp
-	${BUSYBOX} mount -t tmpfs tmpfs /tmp
-	if [ "$?" = "0" ]; then
-		MADETMP="true"
-	fi
-
-fi
-${BUSYBOX} mkdir /tmp/XZDualRecovery
+${BUSYBOX} mkdir /data/local/tmp/XZDualRecovery
 ${BUSYBOX} mount -o remount,ro rootfs /
 
 if [ -x "${BUSYBOX}" ]; then
