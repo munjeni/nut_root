@@ -21,17 +21,14 @@ PREPLOG="/data/local/tmp/XZDualRecovery/preperation.log"
 # Function definitions
 
 TEXECL(){
-  _TIME=`/system/xbin/busybox date +"%H:%M:%S"`
-  echo "${_TIME} >> $*" >> ${PREPLOG}
+  echo "$*" >> ${PREPLOG}
   $* 2>&1 >> ${PREPLOG}
   _RET=$?
-  echo "${_TIME} >> RET=${_RET}" >> ${PREPLOG}
+  echo "RET=${_RET}" >> ${PREPLOG}
   return ${_RET}
 }
 
 EXIT2CM(){
-	umount -l /storage/sdcard1
-
 	export PATH="${_PATH}"
 
 	exec /system/bin/chargemon.stock
@@ -39,10 +36,7 @@ EXIT2CM(){
 }
 
 BUSYBOX="/system/xbin/busybox"
-NOGOODBUSYBOX="false"
 
-#https://github.com/android/platform_system_core/commit/e18c0d508a6d8b4376c6f0b8c22600e5aca37f69
-#The busybox in all of the recoveries has not yet been patched to take this in account.
 ${BUSYBOX} blockdev --setrw $(${BUSYBOX} find /dev/block/platform/msm_sdcc.1/by-name/ -iname "system")
 
 # We can actually safely asume a busybox exists in /system/xbin (as XZDualRecovery installs one there)
@@ -51,42 +45,28 @@ ${BUSYBOX} mount -o remount,rw rootfs /
 ${BUSYBOX} mkdir /data/local/tmp/XZDualRecovery
 ${BUSYBOX} mount -o remount,ro rootfs /
 
-if [ -x "${BUSYBOX}" ]; then
+# remove old log
+${BUSYBOX} rm -rf /data/local/tmp/XZDualRecovery/preperation.log
 
-	TEXECL mount -o remount,rw rootfs /
-	TEXECL mount -o remount,rw /system
+TEXECL mount -o remount,rw rootfs /
+TEXECL mount -o remount,rw /system
 
-	TEXECL mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
-	TEXECL mkdir -p /sys/kernel/security/sony_ric
-	TEXECL chmod 755 /sys/kernel/security/sony_ric
-	TEXECL echo "0" > /sys/kernel/security/sony_ric/enable
+TEXECL mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
+TEXECL mkdir -p /sys/kernel/security/sony_ric
+TEXECL chmod 755 /sys/kernel/security/sony_ric
+TEXECL echo "0" > /sys/kernel/security/sony_ric/enable
 
-	if [ -x "${BUSYBOX}" -a -x "/system/bin/dualrecovery.sh" ]; then
+${BUSYBOX} cp ${BUSYBOX} /sbin/
 
-		${BUSYBOX} cp ${BUSYBOX} /sbin/
+# Create a symlink for each of the supported commands
+for sym in `${BUSYBOX} --list`; do
+	${BUSYBOX} ln -sf ${BUSYBOX} /system/xbin/$sym
+done
 
-		if [ ! -f "/system/etc/.xzdrbusybox" ]; then
+export PATH="/system/xbin"
 
-			# Create a symlink for each of the supported commands
-			for sym in `${BUSYBOX} --list`; do
-				${BUSYBOX} ln -sf ${BUSYBOX} /system/xbin/$sym
-			done
-
-			${BUSYBOX} touch /system/etc/.xzdrbusybox
-
-		fi
-
-		export PATH="/system/xbin"
-
-		TEXECL cp /system/bin/dualrecovery.sh /sbin/init.sh
-		TEXECL chmod 755 /sbin/init.sh
-
-	fi
-
-	TEXECL mount -o remount,ro rootfs /
-	TEXECL mount -o remount,ro /system
-
-fi
+TEXECL mount -o remount,ro rootfs /
+TEXECL mount -o remount,ro /system
 
 if [ ! -d "/system/etc/init.d" ]; then
 	mkdir /system/etc/init.d
