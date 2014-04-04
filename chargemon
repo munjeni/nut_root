@@ -15,12 +15,6 @@ set +x
 _PATH="$PATH"
 export PATH="/system/xbin:/system/bin:/sbin"
 
-# Constants
-LOGDIR="XZDualRecovery"
-SECUREDIR="/system/.XZDualRecovery"
-PREPLOG="/tmp/${LOGDIR}/preperation.log"
-LOGFILE="XZDualRecovery.log"
-
 # Nodes setup
 BOOTREC_LED_RED="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|/system/xbin/busybox grep red)/brightness"
 BOOTREC_LED_GREEN="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|/system/xbin/busybox grep green)/brightness"
@@ -29,11 +23,8 @@ BOOTREC_LED_BLUE="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|/
 # Function definitions
 
 TEXECL(){
-  _TIME=`/system/xbin/busybox date +"%H:%M:%S"`
-  echo "${_TIME} >> $*" >> ${PREPLOG}
-  $* 2>&1 >> ${PREPLOG}
+  $* 2>&1
   _RET=$?
-  echo "${_TIME} >> RET=${_RET}" >> ${PREPLOG}
   return ${_RET}
 }
 
@@ -74,32 +65,7 @@ NOGOODBUSYBOX="false"
 #The busybox in all of the recoveries has not yet been patched to take this in account.
 ${BUSYBOX} blockdev --setrw $(${BUSYBOX} find /dev/block/platform/msm_sdcc.1/by-name/ -iname "system")
 
-MADESECDIR="false"
-if [ ! -d "$SECUREDIR" -a -x "${BUSYBOX}" ]; then
-
-	${BUSYBOX} mount -o remount,rw /system
-	${BUSYBOX} mkdir $SECUREDIR
-	if [ "$?" = "0" ]; then
-		MADESECDIR="true"
-		${BUSYBOX} cp ${BUSYBOX} $SECUREDIR/
-		${BUSYBOX} mount -o remount,ro /system
-	fi
-
-fi
-
-# We can actually safely asume a busybox exists in /system/xbin (as XZDualRecovery installs one there)
 ${BUSYBOX} mount -o remount,rw rootfs /
-MADETMP="false"
-if [ ! -d "/tmp" ]; then
-
-	mkdir /tmp
-	${BUSYBOX} mount -t tmpfs tmpfs /tmp
-	if [ "$?" = "0" ]; then
-		MADETMP="true"
-	fi
-
-fi
-${BUSYBOX} mkdir /tmp/XZDualRecovery
 ${BUSYBOX} mount -o remount,ro rootfs /
 
 if [ -x "${BUSYBOX}" ]; then
@@ -107,12 +73,10 @@ if [ -x "${BUSYBOX}" ]; then
 	TEXECL mount -o remount,rw rootfs /
 	TEXECL mount -o remount,rw /system
 
-	if [ -f "/system/xbin/disableric" ]; then
-		TEXECL mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
-		TEXECL mkdir -p /sys/kernel/security/sony_ric
-		TEXECL chmod 755 /sys/kernel/security/sony_ric
-		TEXECL echo "0" > /sys/kernel/security/sony_ric/enable
-	fi
+	TEXECL mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
+	TEXECL mkdir -p /sys/kernel/security/sony_ric
+	TEXECL chmod 755 /sys/kernel/security/sony_ric
+	TEXECL echo "0" > /sys/kernel/security/sony_ric/enable
 
 	if [ -x "${BUSYBOX}" -a -x "/system/bin/dualrecovery.sh" ]; then
 
