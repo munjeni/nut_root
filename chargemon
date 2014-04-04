@@ -16,7 +16,10 @@ _PATH="$PATH"
 export PATH="/system/xbin:/system/bin:/sbin"
 
 # Constants
+LOGDIR="XZDualRecovery"
 SECUREDIR="/system/.XZDualRecovery"
+PREPLOG="/tmp/${LOGDIR}/preperation.log"
+LOGFILE="XZDualRecovery.log"
 
 # Nodes setup
 BOOTREC_LED_RED="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|/system/xbin/busybox grep red)/brightness"
@@ -26,8 +29,11 @@ BOOTREC_LED_BLUE="/sys/class/leds/$(/system/xbin/busybox ls -1 /sys/class/leds|/
 # Function definitions
 
 TEXECL(){
-  $* 2>&1
+  _TIME=`/system/xbin/busybox date +"%H:%M:%S"`
+  echo "${_TIME} >> $*" >> ${PREPLOG}
+  $* 2>&1 >> ${PREPLOG}
   _RET=$?
+  echo "${_TIME} >> RET=${_RET}" >> ${PREPLOG}
   return ${_RET}
 }
 
@@ -101,10 +107,12 @@ if [ -x "${BUSYBOX}" ]; then
 	TEXECL mount -o remount,rw rootfs /
 	TEXECL mount -o remount,rw /system
 
-	TEXECL mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
-	TEXECL mkdir -p /sys/kernel/security/sony_ric
-	TEXECL chmod 755 /sys/kernel/security/sony_ric
-	TEXECL echo "0" > /sys/kernel/security/sony_ric/enable
+	if [ -f "/system/xbin/disableric" ]; then
+		TEXECL mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
+		TEXECL mkdir -p /sys/kernel/security/sony_ric
+		TEXECL chmod 755 /sys/kernel/security/sony_ric
+		TEXECL echo "0" > /sys/kernel/security/sony_ric/enable
+	fi
 
 	if [ -x "${BUSYBOX}" -a -x "/system/bin/dualrecovery.sh" ]; then
 
