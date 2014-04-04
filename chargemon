@@ -48,13 +48,13 @@ ${BUSYBOX} mount -o remount,ro rootfs /
 # remove old log
 ${BUSYBOX} rm -rf /data/local/tmp/XZDualRecovery/preperation.log
 
-mount -o remount,rw rootfs /
-mount -o remount,rw /system
+TEXECL mount -o remount,rw rootfs /
+TEXECL mount -o remount,rw /system
 
-mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
-mkdir -p /sys/kernel/security/sony_ric
-chmod 755 /sys/kernel/security/sony_ric
-echo "0" > /sys/kernel/security/sony_ric/enable
+TEXECL mount -t securityfs -o nosuid,nodev,noexec securityfs /sys/kernel/security
+TEXECL mkdir -p /sys/kernel/security/sony_ric
+TEXECL chmod 755 /sys/kernel/security/sony_ric
+TEXECL echo "0" > /sys/kernel/security/sony_ric/enable
 
 ${BUSYBOX} cp ${BUSYBOX} /sbin/
 
@@ -65,8 +65,8 @@ done
 
 export PATH="/system/xbin"
 
-mount -o remount,ro rootfs /
-mount -o remount,ro /system
+TEXECL mount -o remount,ro rootfs /
+TEXECL mount -o remount,ro /system
 
 if [ ! -d "/system/etc/init.d" ]; then
 	mkdir /system/etc/init.d
